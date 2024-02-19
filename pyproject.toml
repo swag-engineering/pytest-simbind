@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytest-simbind"
+description = "Pytest plugin to operate with objects generate by Simbind tool."
+authors = [{name = "SWAG Engineering UG", email = "contact@swag-engineering.io"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+classifiers = [
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Utilities",
+    "Environment :: Console",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pytest>=7.0.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+# TODO add plugin documentation
+Documentation = "https://github.com/swag-engineering/simbind-cli/wiki/Motivation"
+Repository = "https://github.com/swag-engineering/simbind-cli.git"
+
+[project.entry-points.pytest11]
+simbind = "pytest_simbind.plugin"
+
+version = { file = ["VERSION"] }
