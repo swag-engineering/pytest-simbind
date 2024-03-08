@@ -1,3 +1,3 @@
-from .plugin import fixture
-from .SimbindCollectorPlugin import SimbindCollectorPlugin
-from .dto import TestCaseInfoDto
+from .fixture import fixture
+from .SimbindCollector import SimbindCollector
+from .dto import TestCaseInfoDto, TestUpdateDto

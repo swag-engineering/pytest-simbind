@@ -1,32 +1,52 @@
+import asyncio
 import os
 import inspect
 import multiprocessing
-from typing import Callable
 from types import TracebackType
+from typing import Callable, AsyncIterator
 
 import pytest
 from _pytest.nodes import Item
 from _pytest.fixtures import FixtureDef, FixtureValue, SubRequest
 
 from .DataSink import DataSink
-from .dto import TestCaseInfoDto
+from .dto import TestCaseInfoDto, TestUpdateDto
 from .SimbindCorePlugin import SimbindCorePlugin
 
 
-class SimbindCollectorPlugin:
+class SimbindCollector:
     def __init__(
             self,
-            tests_path: str,
-            queue: multiprocessing.Queue,
-            lock: multiprocessing.Lock,
-            selector_callback: Callable[[TestCaseInfoDto], int] = None
+            tests_root: str,
+            selector_callback: Callable[[TestCaseInfoDto], int | str | None] = None
     ):
-        self.tests_path = tests_path
-        self.queue = queue
-        self.lock = lock
+        self.tests_root = tests_root
+        self.queue = multiprocessing.Queue(-1)
+        self.lock = multiprocessing.Lock()
         self.selector_callback = selector_callback
-        self.test_cases_map: dict[TestCaseInfoDto, int | str] = {}
+        self.test_cases_map: dict[TestCaseInfoDto, int | str | None] = {}
         self.data_sink = None
+
+    async def start(self, pytest_args: tuple[str] = ()) -> AsyncIterator[TestUpdateDto]:
+        async_queue = asyncio.Queue(-1)
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(
+            None, lambda: pytest.main(list(pytest_args) + [self.tests_root], plugins=[self])
+        )
+        loop.run_in_executor(None, self.redirect_to_to_async_queue, async_queue, loop)
+        while True:
+            msg = await async_queue.get()
+            if msg is None:
+                break
+            yield msg
+
+    def redirect_to_to_async_queue(self, async_queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
+        while True:
+            msg = self.queue.get()
+            if msg is None:
+                asyncio.run_coroutine_threadsafe(async_queue.put(None), loop)
+                break
+            asyncio.run_coroutine_threadsafe(async_queue.put(msg), loop)
 
     @staticmethod
     def pytest_configure(config):
@@ -55,7 +75,7 @@ class SimbindCollectorPlugin:
             model_obj = fixturedef.func()
             self.data_sink = DataSink(
                 self.test_cases_map[request.node.nodeid],
-                self.tests_path,
+                self.tests_root,
                 self.queue,
                 self.lock,
                 finalizer=model_obj.terminate if getattr(fixturedef.func, "_simbind_auto_terminate") else None
@@ -89,5 +109,5 @@ class SimbindCollectorPlugin:
             node_id=item.nodeid,
             function_name=item.name,
             module_name=inspect.getmodulename(item.parent.name),
-            package_path=os.path.relpath(os.path.dirname(item.parent.path), self.tests_path)
+            package_path=os.path.relpath(os.path.dirname(item.parent.path), self.tests_root)
         )

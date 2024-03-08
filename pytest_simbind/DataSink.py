@@ -4,7 +4,8 @@ import multiprocessing
 from typing import Callable
 
 from .TestLogHandler import TestLogHandler
-from .dto import LogMessageDto, TestDataRecordDto, TestUpdateDto, TestStatusDto, TestStateEnum, FailDetailsDto
+from .dto import LogMessageDto, TestDataRecordDto, TestUpdateDto, TestStatusDto, TestStateEnum, FailDetailsDto, \
+    TestProgressDto
 
 
 class DataSink:
@@ -47,10 +48,12 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
+                progress=TestProgressDto.FINISHED,
                 data=None,
                 status=TestStatusDto(
                     state=TestStateEnum.SUCCEED,
-                    fail_details=None
+                    fail_details=None,
+                    internal_error=None
                 )
             )
         )
@@ -62,6 +65,7 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
+                progress=TestProgressDto.FINISHED,
                 data=None,
                 status=TestStatusDto(
                     state=TestStateEnum.FAILED,
@@ -73,7 +77,23 @@ class DataSink:
                                 exc_tb.tb_frame.f_code.co_filename, self.tests_path
                             )
                         )
-                    )
+                    ),
+                    internal_error=None
+                )
+            )
+        )
+        self.stop()
+
+    def mark_terminated(self, msg):
+        self.push(
+            TestUpdateDto(
+                test_id=self.function_id,
+                progress=TestProgressDto.FINISHED,
+                data=None,
+                status=TestStatusDto(
+                    state=TestStateEnum.TERMINATED,
+                    internal_error=msg,
+                    fail_details=None
                 )
             )
         )
@@ -93,6 +113,7 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
+                progress=TestProgressDto.RUNNING,
                 data=TestDataRecordDto(
                     timestamp=time,
                     inputs=inputs,
