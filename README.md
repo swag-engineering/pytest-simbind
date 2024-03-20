@@ -8,7 +8,8 @@ Specially, pytest-simbind allows to overcome main limitation
 of [Simbind](https://github.com/swag-engineering/simbind-cli) generated objects:
 > Due to the nature of binding technology you can instantiate Model class only once within a single process, all
 > consequent instances will have the same state(time, input, and output props) as the first instance. If you need to
-> instantiate multiple objects we recommend doing it in separate processes.
+> instantiate multiple objects we recommend doing it in separate processes.  
+
 
 In the nutshell, pytest-simbind provides similar functionality
 as [pytest-xdist](https://github.com/pytest-dev/pytest-xdist) running each _simbind_ marked test in new process:
@@ -25,7 +26,7 @@ def model():
 
 
 @pytest.mark.simbind
-def some_test(model: Model):
+def test_something(model: Model):
     ...
 ```
 
@@ -55,7 +56,7 @@ to [Simbind Wiki](https://github.com/swag-engineering/simbind-cli/wiki/Python-Pa
 
 pytest-simbind provides asynchronous API to:
 
-- dynamically select tests
+- dynamically select and run tests
 - collect [Simbind](https://github.com/swag-engineering/simbind-cli) model's data, test logs and fail reports.
 
 For more information and examples please refer
