@@ -1,5 +1,5 @@
-import asyncio
 import os
+import asyncio
 import inspect
 import multiprocessing
 from types import TracebackType
@@ -81,6 +81,8 @@ class SimbindCollector:
                 finalizer=model_obj.terminate if getattr(fixturedef.func, "_simbind_auto_terminate") else None
             )
             self.data_sink.start()
+            # TODO should raise error if collector_callback doesn't exist?
+            # e.g. simbind fixture used on non-simbind object
             setattr(model_obj, "collector_callback", self.data_sink.consume_data)
             fixturedef.cached_result = (model_obj, cache_key, None)
             return model_obj

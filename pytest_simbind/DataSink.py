@@ -1,6 +1,7 @@
 import os
 import logging
 import multiprocessing
+from types import TracebackType
 from typing import Callable
 
 from .TestLogHandler import TestLogHandler
@@ -59,7 +60,7 @@ class DataSink:
         )
         self.stop()
 
-    def mark_failed(self, exc_type, exc_obj, exc_tb):
+    def mark_failed(self, exc_type: type[BaseException], exc_obj: BaseException, exc_tb: TracebackType):
         if self.finalizer:
             self.finalizer()
         self.push(
@@ -70,6 +71,7 @@ class DataSink:
                 status=TestStatusDto(
                     state=TestStateEnum.FAILED,
                     fail_details=FailDetailsDto(
+                        exc_type=exc_type.__name__,
                         text=str(exc_obj),
                         line_number=exc_tb.tb_frame.f_lineno,
                         file_location=os.path.normpath(

@@ -7,7 +7,6 @@ import pytest
 @pytest.mark.simbind
 def test_2_1_1_single_log(model):
     logging.info("processing test_11")
-    model.step()
 
 
 @pytest.mark.simbind

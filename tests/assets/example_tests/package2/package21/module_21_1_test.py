@@ -10,13 +10,11 @@ def test_21_1_1_realistic(model):
     model.input.EngineRPM = 3500
     model.input.Gear = 3
     model.input.TransmissionRPM = 2000
-    model.step()
     while model.time < 0.1:
-        assert model.Ti < 10
+        model.step()
+    assert False, "Something went wrong"
 
 
 @pytest.mark.simbind
-def test_21_1_2_with_delays(model):
-    for _ in range(10):
-        time.sleep(0.5)
-        model.step()
+def test_21_1_2_exception(model):
+    raise ValueError("Something went wrong")
