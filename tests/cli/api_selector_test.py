@@ -24,9 +24,9 @@ def test_all_tests_deselected(pytester, model_selector, example_tests_path):
     pytester.makeconftest(f"""
     import pytest
 
-    from pytest_simbind import SimbindCollector, TestCaseInfoDto
+    from pytest_simbind import SimbindCollector, dto as simbind_dto
     
-    def empty_classifier(_: TestCaseInfoDto):
+    def empty_classifier(_: simbind_dto.TestCaseInfoDto):
         return None
     
     def pytest_configure(config):
@@ -62,9 +62,9 @@ def test_one_selected(pytester, model_selector, example_tests_path):
     pytester.makeconftest(f"""
     import pytest
 
-    from pytest_simbind import SimbindCollector, TestCaseInfoDto
+    from pytest_simbind import SimbindCollector, dto as simbind_dto
 
-    def classifier(test_case: TestCaseInfoDto):
+    def classifier(test_case: simbind_dto.TestCaseInfoDto):
         if test_case.function_name == "test_one":
             return "test_one"
         else:
@@ -105,9 +105,9 @@ def test_both_selected(pytester, model_selector, example_tests_path):
     pytester.makeconftest(f"""
     import pytest
 
-    from pytest_simbind import SimbindCollector, TestCaseInfoDto
+    from pytest_simbind import SimbindCollector, dto as simbind_dto
 
-    def classifier(test_case: TestCaseInfoDto):
+    def classifier(test_case: simbind_dto.TestCaseInfoDto):
         return test_case.function_name
 
     def pytest_configure(config):
