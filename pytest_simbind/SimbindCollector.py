@@ -30,8 +30,9 @@ class SimbindCollector:
     async def start(self, pytest_args: tuple[str] = ()) -> AsyncIterator[TestUpdateDto]:
         async_queue = asyncio.Queue(-1)
         loop = asyncio.get_running_loop()
+        # --assert=plain needed to avoid PytestAssertRewriteWarning
         loop.run_in_executor(
-            None, lambda: pytest.main(list(pytest_args) + [self.tests_root], plugins=[self])
+            None, lambda: pytest.main(list(pytest_args) + ["--assert=plain", self.tests_root], plugins=[self])
         )
         loop.run_in_executor(None, self.redirect_to_to_async_queue, async_queue, loop)
         while True:
@@ -47,10 +48,6 @@ class SimbindCollector:
                 asyncio.run_coroutine_threadsafe(async_queue.put(None), loop)
                 break
             asyncio.run_coroutine_threadsafe(async_queue.put(msg), loop)
-
-    @staticmethod
-    def pytest_configure(config):
-        config.pluginmanager.register(SimbindCorePlugin, "pytest_simbind_core")
 
     def pytest_collection_modifyitems(self, config, items):
         selected = []

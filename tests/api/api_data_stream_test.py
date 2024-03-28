@@ -1,22 +1,17 @@
-__test__ = False
-
+import os
+import sys
+import uuid
 import asyncio
 import contextlib
 import subprocess
 
-import os
-import sys
-import uuid
+from pytest_simbind import SimbindCollector, dto as simbind_dto
 
 _tests_root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 _assets_path = os.path.join(_tests_root_path, "assets")
 _example_tests_path = os.path.join(_assets_path, "example_tests")
 _sil_model_path = os.path.join(_assets_path, "model-6.3-py3-none-linux_x86_64.whl")
 _mock_model_path = os.path.join(_assets_path, "model-6.3+mock-py3-none-any.whl")
-
-_project_root_path = os.path.dirname(_tests_root_path)
-sys.path.append(_project_root_path)
-from pytest_simbind import SimbindCollector, dto
 
 
 @contextlib.contextmanager
@@ -36,8 +31,8 @@ def install_model(model_path: str):
         )
 
 
-async def collect_data(classifier_tuple_lst: list[tuple[str, uuid.UUID]]) -> list[dto.TestUpdateDto]:
-    def classifier(test_case: dto.TestCaseInfoDto):
+async def collect_data(classifier_tuple_lst: list[tuple[str, uuid.UUID]]) -> list[simbind_dto.TestUpdateDto]:
+    def classifier(test_case: simbind_dto.TestCaseInfoDto):
         for test_name, test_id in classifier_tuple_lst:
             if test_case.function_name == test_name:
                 return test_id
@@ -45,14 +40,14 @@ async def collect_data(classifier_tuple_lst: list[tuple[str, uuid.UUID]]) -> lis
 
     collector = SimbindCollector(_example_tests_path, classifier)
 
-    test_data: list[dto.TestUpdateDto] = []
+    test_data: list[simbind_dto.TestUpdateDto] = []
     async for msg in collector.start():
         test_data.append(msg)
     return test_data
 
 
 async def test_no_selection():
-    def classifier(_: dto.TestCaseInfoDto):
+    def classifier(_: simbind_dto.TestCaseInfoDto):
         return None
 
     collector = SimbindCollector(_example_tests_path, classifier)
@@ -68,14 +63,14 @@ async def test_1_1_1_non_zero_input_selected():
     assert len(test_data) == 2
 
     assert test_data[0].test_id == test_id
-    assert test_data[0].progress == dto.TestProgressDto.RUNNING
+    assert test_data[0].progress == simbind_dto.TestProgressEnum.RUNNING
     assert test_data[0].data.timestamp == 0
     assert any([val != 0 for val in test_data[0].data.inputs.values()])
     assert test_data[0].status is None
 
     assert test_data[1].test_id == test_id
-    assert test_data[1].progress == dto.TestProgressDto.FINISHED
-    assert test_data[1].status.state == dto.TestStateEnum.SUCCEED
+    assert test_data[1].progress == simbind_dto.TestProgressEnum.FINISHED
+    assert test_data[1].status.state == simbind_dto.TestStateEnum.SUCCEED
     assert test_data[1].data is None
 
 
@@ -86,7 +81,7 @@ async def test_1_1_2_ten_steps_selected():
     assert len(test_data) == 12
 
     assert test_data[0].test_id == test_id
-    assert test_data[0].progress == dto.TestProgressDto.RUNNING
+    assert test_data[0].progress == simbind_dto.TestProgressEnum.RUNNING
     assert test_data[0].data.timestamp == 0
     assert any([val != 0 for val in test_data[0].data.inputs.values()])
     assert test_data[0].status is None
@@ -94,12 +89,12 @@ async def test_1_1_2_ten_steps_selected():
     assert len([update for update in test_data if update.data and update.data.timestamp == 0]) == 1
 
     assert test_data[11].test_id == test_id
-    assert test_data[11].progress == dto.TestProgressDto.FINISHED
-    assert test_data[11].status.state == dto.TestStateEnum.SUCCEED
+    assert test_data[11].progress == simbind_dto.TestProgressEnum.FINISHED
+    assert test_data[11].status.state == simbind_dto.TestStateEnum.SUCCEED
     assert test_data[11].data is None
 
 
-async def module_1_1_selected():
+async def test_module_1_1_selected():
     test1_id = uuid.uuid4()
     test2_id = uuid.uuid4()
     test_data = await collect_data([
@@ -116,11 +111,11 @@ async def module_1_1_selected():
     assert len(test2_data) == 12
     assert len([
         update for update in test1_data if
-        update.progress == dto.TestProgressDto.FINISHED and update.status.state == dto.TestStateEnum.SUCCEED
+        update.progress == simbind_dto.TestProgressEnum.FINISHED and update.status.state == simbind_dto.TestStateEnum.SUCCEED
     ]) == 1
     assert len([
         update for update in test2_data if
-        update.progress == dto.TestProgressDto.FINISHED and update.status.state == dto.TestStateEnum.SUCCEED
+        update.progress == simbind_dto.TestProgressEnum.FINISHED and update.status.state == simbind_dto.TestStateEnum.SUCCEED
     ]) == 1
 
 
@@ -154,14 +149,14 @@ async def test_21_1_1_realistic_selected():
     ])
 
     assert test_data[-2].data.timestamp >= 0.1
-    assert test_data[-1].progress == dto.TestProgressDto.FINISHED
-    assert test_data[-1].status.state == dto.TestStateEnum.FAILED
+    assert test_data[-1].progress == simbind_dto.TestProgressEnum.FINISHED
+    assert test_data[-1].status.state == simbind_dto.TestStateEnum.FAILED
     assert test_data[-1].data is None
     assert test_data[-1].status.internal_error is None
     assert test_data[-1].status.fail_details is not None
     assert test_data[-1].status.fail_details.line_number == 15
     assert test_data[-1].status.fail_details.file_location == "package2/package21/module_21_1_test.py"
-    assert test_data[-1].status.fail_details.text == "Something went wrong\nassert False"
+    assert test_data[-1].status.fail_details.text == "Something went wrong"
 
 
 async def test_21_1_2_exception():
@@ -170,8 +165,8 @@ async def test_21_1_2_exception():
         ("test_21_1_2_exception", test_id)
     ])
 
-    assert test_data[-1].progress == dto.TestProgressDto.FINISHED
-    assert test_data[-1].status.state == dto.TestStateEnum.FAILED
+    assert test_data[-1].progress == simbind_dto.TestProgressEnum.FINISHED
+    assert test_data[-1].status.state == simbind_dto.TestStateEnum.FAILED
     assert test_data[-1].data is None
     assert test_data[-1].status.internal_error is None
     assert test_data[-1].status.fail_details is not None
@@ -181,21 +176,21 @@ async def test_21_1_2_exception():
 
 
 async def test_all_selected():
-    def classifier(_: dto.TestCaseInfoDto):
+    def classifier(_: simbind_dto.TestCaseInfoDto):
         return str(uuid.uuid4())
 
     collector = SimbindCollector(_example_tests_path, classifier)
 
-    test_data: list[dto.TestUpdateDto] = []
+    test_data: list[simbind_dto.TestUpdateDto] = []
     async for msg in collector.start():
         test_data.append(msg)
 
     assert len(set([update.test_id for update in test_data])) == 6
-    assert len([update for update in test_data if update.progress == dto.TestProgressDto.FINISHED]) == 6
+    assert len([update for update in test_data if update.progress == simbind_dto.TestProgressEnum.FINISHED]) == 6
     assert len([
         update for update in test_data if
-        update.progress == dto.TestProgressDto.FINISHED and
-        update.status.state == dto.TestStateEnum.FAILED
+        update.progress == simbind_dto.TestProgressEnum.FINISHED and
+        update.status.state == simbind_dto.TestStateEnum.FAILED
     ]) == 2
 
 
@@ -205,7 +200,7 @@ async def tests_stack():
             await test_no_selection()
             await test_1_1_1_non_zero_input_selected()
             await test_1_1_2_ten_steps_selected()
-            await module_1_1_selected()
+            await test_module_1_1_selected()
             await test_2_1_1_single_log_selected()
             await test_2_1_2_ten_logs_selected()
             await test_21_1_1_realistic_selected()

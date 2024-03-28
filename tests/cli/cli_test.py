@@ -18,9 +18,6 @@ def test_no_mark_error(pytester, model_selector):
         def test_simbind_fixture(model):
             pass
     """)
-    pytester.makeconftest("""
-        pytest_plugins = ["pytest_simbind.plugin"]
-    """)
     result = pytester.runpytest()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(["*Simbind fixture is used within parent process.*"])
@@ -40,9 +37,6 @@ def test_valid_mark(pytester, model_selector):
         @pytest.mark.simbind
         def test_simbind_fixture(model):
             pass
-    """)
-    pytester.makeconftest("""
-        pytest_plugins = ["pytest_simbind.plugin"]
     """)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
@@ -64,9 +58,6 @@ def test_valid_mark_with_model(pytester, model_selector):
         @pytest.mark.simbind
         def test_simbind_fixture(model):
             assert model.time == 0
-    """)
-    pytester.makeconftest("""
-        pytest_plugins = ["pytest_simbind.plugin"]
     """)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
@@ -125,9 +116,6 @@ def test_valid_isolation(pytester, model_selector):
         def test_2(model):
             assert model.time == 0
             model.step()
-    """)
-    pytester.makeconftest("""
-        pytest_plugins = ["pytest_simbind.plugin"]
     """)
     result = pytester.runpytest()
     result.assert_outcomes(passed=2)

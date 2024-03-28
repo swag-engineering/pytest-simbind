@@ -16,6 +16,6 @@ class TestStatusDto:
     __test__ = False
     state: TestStateEnum
     # exists if state == FAILED
-    fail_details: Optional[FailDetailsDto]
+    fail_details: Optional[FailDetailsDto] = None
     # exists if state == TERMINATED
-    internal_error: Optional[str]
+    internal_error: Optional[str] = None

@@ -1,11 +1,19 @@
+import enum
 import logging
-from typing import Literal
 from dataclasses import dataclass
+
+
+class LogLevelEnum(enum.Enum):
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
 
 
 @dataclass
 class LogMessageDto:
-    log_level: Literal[logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL]
+    log_level: LogLevelEnum
     text: str
     line_number: int
     file_location: str

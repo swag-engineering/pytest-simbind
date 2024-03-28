@@ -6,7 +6,7 @@ from typing import Callable
 
 from .TestLogHandler import TestLogHandler
 from .dto import LogMessageDto, TestDataRecordDto, TestUpdateDto, TestStatusDto, TestStateEnum, FailDetailsDto, \
-    TestProgressDto
+    TestProgressEnum, LogLevelEnum
 
 
 class DataSink:
@@ -49,7 +49,7 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
-                progress=TestProgressDto.FINISHED,
+                progress=TestProgressEnum.FINISHED,
                 data=None,
                 status=TestStatusDto(
                     state=TestStateEnum.SUCCEED,
@@ -66,7 +66,7 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
-                progress=TestProgressDto.FINISHED,
+                progress=TestProgressEnum.FINISHED,
                 data=None,
                 status=TestStatusDto(
                     state=TestStateEnum.FAILED,
@@ -90,7 +90,7 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
-                progress=TestProgressDto.FINISHED,
+                progress=TestProgressEnum.FINISHED,
                 data=None,
                 status=TestStatusDto(
                     state=TestStateEnum.TERMINATED,
@@ -104,7 +104,7 @@ class DataSink:
     def consume_log_message(self, record: logging.LogRecord):
         self.log_messages.append(
             LogMessageDto(
-                log_level=record.levelno,
+                log_level=LogLevelEnum(record.levelno),
                 text=record.msg,
                 line_number=record.lineno,
                 file_location=os.path.normpath(os.path.relpath(record.pathname, self.tests_path))
@@ -115,7 +115,7 @@ class DataSink:
         self.push(
             TestUpdateDto(
                 test_id=self.function_id,
-                progress=TestProgressDto.RUNNING,
+                progress=TestProgressEnum.RUNNING,
                 data=TestDataRecordDto(
                     timestamp=time,
                     inputs=inputs,
